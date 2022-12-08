@@ -32,8 +32,9 @@ type ProgressBar struct {
 }
 
 type Circle struct {
-	Min image.Point
-	Max image.Point
+	Min   image.Point
+	Max   image.Point
+	Color color2.NRGBA
 }
 
 func (c Circle) Draw(gtx C) D {
@@ -41,12 +42,16 @@ func (c Circle) Draw(gtx C) D {
 		c.Min,
 		c.Max,
 	}.Op(gtx.Ops)
-	color := color2.NRGBA{R: 200, A: 255}
+	color := c.Color
 	paint.FillShape(gtx.Ops, color, circleObj)
 	d := image.Point{Y: 400}
 	return layout.Dimensions{
 		Size: d,
 	}
+}
+
+func (c *Circle) ChangeColor(progress float32) {
+	c.Color = color2.NRGBA{R: 255, G: uint8(239 * (1 - progress)), B: uint8(174 * (1 - progress)), A: 255}
 }
 
 func (b ProgressBar) Draw(gtx C) D {

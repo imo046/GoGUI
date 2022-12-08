@@ -10,6 +10,9 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"image"
+	"log"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,11 +24,16 @@ func Draw(w *app.Window) error {
 	//clickable widget
 	var startButton widget.Clickable
 
+	//editor text widget
+	var durationInput widget.Editor
+
 	//progress params
 	var progressInc = make(chan float32)
 	defer close(progressInc)
 
 	var progress float32
+
+	var duration float32
 
 	//runs in the background
 	go func() {
@@ -57,9 +65,17 @@ func Draw(w *app.Window) error {
 
 				//event
 				if startButton.Clicked() {
+					userInput := durationInput.Text()
+					userInput = strings.TrimSpace(userInput)
+					floatInput, err := strconv.ParseFloat(userInput, 32)
+					if err != nil {
+						log.Fatal(err)
+					}
+					duration = float32(floatInput)
+					duration = duration / (1 - progress)
+
 					processing = !processing
 				}
-
 				layout.Flex{
 					//Vertical alignment, from top to bottom
 					Axis: layout.Vertical,
@@ -67,19 +83,32 @@ func Draw(w *app.Window) error {
 					//Empty space at the start (top)
 					Spacing: layout.SpaceStart,
 				}.Layout(gtx,
+
+					//Figure
 					layout.Rigid(
 						func(gtx layout.Context) layout.Dimensions {
-							return Circle{
+							circle := Circle{
 								Min: image.Point{gtx.Constraints.Max.X/2 - 120, 0},
 								Max: image.Point{gtx.Constraints.Max.X/2 + 120, 240},
-							}.Draw(gtx)
+							}
+							circle.ChangeColor(progress)
+							return circle.Draw(gtx)
 						},
 					),
+					//placeholder for the text input field
+					layout.Rigid(
+						func(gtx layout.Context) layout.Dimensions {
+							return layout.Dimensions{}
+						},
+					),
+					//Progress bar
 					layout.Rigid(
 						func(gtx C) D {
 							return ProgressBar{th: th, progress: progress}.Draw(gtx)
 						},
 					),
+
+					//Button
 					layout.Rigid(
 						func(gtx C) D {
 
@@ -107,6 +136,7 @@ func Draw(w *app.Window) error {
 							)
 						},
 					),
+
 					//Empty spacer, goes after the button (under it on the flex box)
 					layout.Rigid(
 						Spacer{Width: unit.Dp(25), Height: unit.Dp(25)}.Draw,
