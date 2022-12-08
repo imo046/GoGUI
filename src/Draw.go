@@ -9,6 +9,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"image"
 	"time"
 )
 
@@ -66,6 +67,14 @@ func Draw(w *app.Window) error {
 					//Empty space at the start (top)
 					Spacing: layout.SpaceStart,
 				}.Layout(gtx,
+					layout.Rigid(
+						func(gtx layout.Context) layout.Dimensions {
+							return Circle{
+								Min: image.Point{gtx.Constraints.Max.X/2 - 120, 0},
+								Max: image.Point{gtx.Constraints.Max.X/2 + 120, 240},
+							}.Draw(gtx)
+						},
+					),
 					layout.Rigid(
 						func(gtx C) D {
 							return ProgressBar{th: th, progress: progress}.Draw(gtx)
