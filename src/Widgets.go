@@ -31,10 +31,21 @@ type ProgressBar struct {
 	progress float32
 }
 
+type TextField struct {
+	th     *material.Theme
+	editor *widget.Editor
+	hint   string
+}
+
 type Circle struct {
 	Min   image.Point
 	Max   image.Point
 	Color color2.NRGBA
+}
+
+func (f TextField) Draw(gtx C) D {
+	ed := material.Editor(f.th, f.editor, f.hint)
+	return ed.Layout(gtx)
 }
 
 func (c Circle) Draw(gtx C) D {

@@ -1,16 +1,20 @@
 package src
 
 import (
+	"fmt"
 	"gioui.org/app"
 	"gioui.org/font/gofont"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"image"
+	"image/color"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +28,7 @@ func Draw(w *app.Window) error {
 	//clickable widget
 	var startButton widget.Clickable
 
-	//editor text widget
+	//editor editorText widget
 	var durationInput widget.Editor
 
 	//progress params
@@ -60,7 +64,7 @@ func Draw(w *app.Window) error {
 			switch e := e.(type) {
 
 			case system.FrameEvent:
-				//specify new graphical context
+				//specify new graphical coneditorText
 				gtx := layout.NewContext(&ops, e)
 
 				//event
@@ -75,6 +79,10 @@ func Draw(w *app.Window) error {
 					duration = duration / (1 - progress)
 
 					processing = !processing
+					//TODO: revert to default at click event
+					//if processing && progress >= 1 {
+					//	redraw
+					//}
 				}
 				layout.Flex{
 					//Vertical alignment, from top to bottom
@@ -86,7 +94,7 @@ func Draw(w *app.Window) error {
 
 					//Figure
 					layout.Rigid(
-						func(gtx layout.Context) layout.Dimensions {
+						func(gtx C) D {
 							circle := Circle{
 								Min: image.Point{gtx.Constraints.Max.X/2 - 120, 0},
 								Max: image.Point{gtx.Constraints.Max.X/2 + 120, 240},
@@ -95,10 +103,41 @@ func Draw(w *app.Window) error {
 							return circle.Draw(gtx)
 						},
 					),
-					//placeholder for the text input field
+					//placeholder for the editorText input field
 					layout.Rigid(
-						func(gtx layout.Context) layout.Dimensions {
-							return layout.Dimensions{}
+
+						func(gtx C) D {
+							// Wrap the editor in material design
+							ed := TextField{th, &durationInput, "sec"}
+							durationInput.SingleLine = true
+							durationInput.Alignment = text.Middle
+
+							if processing && progress < 1 {
+								remainTime := (1 - progress) * duration
+								inputStr := fmt.Sprintf("%.1f", math.Round(float64(remainTime)*10)/10)
+								//update
+								durationInput.SetText(inputStr)
+							}
+
+							// Define insets ...
+							margins := layout.Inset{
+								Top:    unit.Dp(0),
+								Right:  unit.Dp(170),
+								Bottom: unit.Dp(40),
+								Left:   unit.Dp(170),
+							}
+							// ... and borders ...
+							border := widget.Border{
+								Color:        color.NRGBA{R: 204, G: 204, B: 204, A: 255},
+								CornerRadius: unit.Dp(3),
+								Width:        unit.Dp(2),
+							}
+							// ... before laying it out, one inside the other
+							return margins.Layout(gtx,
+								func(gtx C) D {
+									return border.Layout(gtx, ed.Draw)
+								},
+							)
 						},
 					),
 					//Progress bar
@@ -112,11 +151,15 @@ func Draw(w *app.Window) error {
 					layout.Rigid(
 						func(gtx C) D {
 
-							var text string
+							var editorText string
 							if !processing {
-								text = "Start"
-							} else {
-								text = "Stop"
+								editorText = "Start"
+							}
+							if processing && progress < 1 {
+								editorText = "Stop"
+							}
+							if processing && progress >= 1 {
+								editorText = "Finished"
 							}
 
 							//Define margins around the button with margins
@@ -131,7 +174,7 @@ func Draw(w *app.Window) error {
 								//Within margins, define and layout the button
 								func(gtx C) D {
 									//place button (Button is a widget, something which returns its own dimensions)
-									return Button{th: th, btn: &startButton, text: text}.Draw(gtx)
+									return Button{th: th, btn: &startButton, text: editorText}.Draw(gtx)
 								},
 							)
 						},
