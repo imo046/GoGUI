@@ -20,6 +20,14 @@ import (
 	"time"
 )
 
+// TODO: use default state to return params after clicking "Finished"
+type State struct {
+	progress   float32
+	duration   float32
+	processing bool
+	text       string
+}
+
 func Draw(w *app.Window) error {
 
 	//operations from the UI
@@ -64,7 +72,7 @@ func Draw(w *app.Window) error {
 			switch e := e.(type) {
 
 			case system.FrameEvent:
-				//specify new graphical coneditorText
+				//specify new graphical context
 				gtx := layout.NewContext(&ops, e)
 
 				//event
@@ -81,7 +89,6 @@ func Draw(w *app.Window) error {
 					processing = !processing
 					//TODO: revert to default at click event
 					//if processing && progress >= 1 {
-					//	redraw
 					//}
 				}
 				layout.Flex{
@@ -103,7 +110,7 @@ func Draw(w *app.Window) error {
 							return circle.Draw(gtx)
 						},
 					),
-					//placeholder for the editorText input field
+					//EditorText input field
 					layout.Rigid(
 
 						func(gtx C) D {
@@ -119,20 +126,20 @@ func Draw(w *app.Window) error {
 								durationInput.SetText(inputStr)
 							}
 
-							// Define insets ...
+							// Define insets
 							margins := layout.Inset{
 								Top:    unit.Dp(0),
 								Right:  unit.Dp(170),
 								Bottom: unit.Dp(40),
 								Left:   unit.Dp(170),
 							}
-							// ... and borders ...
+							// Borders
 							border := widget.Border{
 								Color:        color.NRGBA{R: 204, G: 204, B: 204, A: 255},
 								CornerRadius: unit.Dp(3),
 								Width:        unit.Dp(2),
 							}
-							// ... before laying it out, one inside the other
+							// Draw them
 							return margins.Layout(gtx,
 								func(gtx C) D {
 									return border.Layout(gtx, ed.Draw)
